@@ -1,6 +1,6 @@
 # teen_phone_addiction
 '''
-Este programa está muito bem estruturado para resolver uma tarefa de regressão supervisionada com o
+Este programa está estruturado para resolver uma tarefa de regressão supervisionada com o
 algoritmo XGBoost, que é altamente eficaz e usado em competições de Machine Learning.
 
 ✅ Pontos fortes:
