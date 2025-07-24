@@ -1,14 +1,3 @@
-'''
-Este programa está muito bem estruturado para resolver uma tarefa de regressão supervisionada com o
-algoritmo XGBoost, que é altamente eficaz e usado em competições de Machine Learning.
-
-✅ Pontos fortes:
-
-Realiza todo o pipeline: leitura, limpeza, codificação, divisão dos dados, treinamento, avaliação e
-interpretação.
-
-Usa o LabelEncoder  para lidar com variáveis categóricas automaticamente.
-
 Avalia o modelo com métricas apropriadas (RMSE e R²).
 
 Apresenta visualmente a importância das features — útil para análise interpretativa.
@@ -31,8 +20,8 @@ Salvar o modelo treinado com joblib ou pickle se for usar em produção.
 import pandas as pd                              # Para manipulação de dados tabulares
 import xgboost as xgb                            # Algoritmo XGBoost para regressão
 from sklearn.model_selection import train_test_split  # Para dividir os dados em treino e teste
-from sklearn.metrics import mean_squared_error, r2_score  # Para avaliar a performance do modelo
-from sklearn.preprocessing import LabelEncoder   # Para transformar variáveis categóricas em números
+from sklearn.metrics import mean_squared_error, r2_score, mean_absolute_error  # Avaliação do modelo
+from sklearn.preprocessing import LabelEncoder, StandardScaler  # Codificação e normalização de dados
 import matplotlib.pyplot as plt                  # Para visualizar a importância das variáveis
 import numpy as np                               # Para operações numéricas        
 
@@ -53,6 +42,21 @@ for col in categorical_cols:
 # Remove qualquer linha que contenha valores ausentes (NaN)
 df.dropna(inplace=True)
 
+# -------------------------------------------------------------------------------------
+# Remoção de outliers usando a técnica do intervalo interquartil (IQR)
+# -------------------------------------------------------------------------------------
+
+Q1 = df.quantile(0.25)  # Primeiro quartil
+Q3 = df.quantile(0.75)  # Terceiro quartil
+IQR = Q3 - Q1           # Intervalo interquartil
+
+# Remove linhas com valores fora do intervalo permitido (outliers)
+df = df[~((df < (Q1 - 1.5 * IQR)) | (df > (Q3 + 1.5 * IQR))).any(axis=1)]
+
+# -------------------------------------------------------------------------------------
+# Normalização dos dados com StandardScaler
+# -------------------------------------------------------------------------------------
+
 # Define a variável alvo que queremos prever
 target = 'Addiction_Level'
 
@@ -63,8 +67,16 @@ features = [col for col in df.columns if col != target]
 X = df[features]
 y = df[target]
 
-# Separa os dados em treino (80%) e teste (20%) de forma aleatória, com uma semente fixa para reprodutibilidade
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+# Cria um objeto StandardScaler para normalizar os dados
+scaler = StandardScaler()
+
+# Aplica o ajuste e a transformação dos dados preditores (X)
+X_scaled = scaler.fit_transform(X)
+
+# -------------------------------------------------------------------------------------
+
+# Separa os dados normalizados em treino (80%) e teste (20%) de forma aleatória
+X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.2, random_state=42)
 
 # Cria o modelo de regressão XGBoost com objetivo de minimizar o erro quadrático
 model = xgb.XGBRegressor(objective='reg:squarederror', random_state=42)
@@ -75,16 +87,25 @@ model.fit(X_train, y_train)
 # Realiza previsões com os dados de teste
 y_pred = model.predict(X_test)
 
-# Calcula o Erro Médio Quadrático (RMSE) - quanto menor, melhor
-#rmse = mean_squared_error(y_test, y_pred, squared=False)
+# -------------------------------------------------------------------------------------
+# Avaliação do modelo com diferentes métricas de regressão
+# -------------------------------------------------------------------------------------
+
+# Calcula o Erro Médio Quadrático (RMSE)
 rmse = np.sqrt(mean_squared_error(y_test, y_pred))
 
-# Calcula o coeficiente de determinação (R²) - quanto mais próximo de 1, melhor
+# Calcula o Erro Absoluto Médio (MAE)
+mae = mean_absolute_error(y_test, y_pred)
+
+# Calcula o coeficiente de determinação (R²)
 r2 = r2_score(y_test, y_pred)
 
 # Exibe as métricas de avaliação do modelo
-print(f"RMSE: {rmse:.2f}")
-print(f"R²: {r2:.2f}")
+print(f"RMSE: {rmse:.2f}")     # Erro médio quadrático
+print(f"MAE: {mae:.2f}")       # Erro absoluto médio
+print(f"R²: {r2:.2f}")         # Coeficiente de determinação
+
+# -------------------------------------------------------------------------------------
 
 # Gera um gráfico com a importância relativa de cada variável preditora
 xgb.plot_importance(model)
