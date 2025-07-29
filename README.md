@@ -1,5 +1,7 @@
 # teen_phone_addiction
+
 '''
+
 Descrição Geral da Base de Dados: teen_phone_addiction_dataset.csv
 Essa base parece estar relacionada ao nível de vício em celular entre adolescentes. 
 Foi construída a partir de questionários, entrevistas ou registros comportamentais de jovens, 
